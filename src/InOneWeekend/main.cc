@@ -9,26 +9,39 @@
 // along with this software. If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //==============================================================================================
 
+#include <ray.h>
+
 #include <iostream>
 
 
-int main() {
-    const int image_width = 256;
-    const int image_height = 256;
+vec3 ray_color(const ray& r) {
+    vec3 unit_direction = unit_vector(r.direction());
+    auto t = 0.5*(unit_direction.y() + 1.0);
+    return (1.0-t)*vec3(1.0, 1.0, 1.0) + t*vec3(0.5, 0.7, 1.0);
+}
 
-    std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+int main() {
+    const int image_width = 768;
+    const auto aspect_ratio = 9.0 / 16.0;
+    const int image_height = static_cast<int>(aspect_ratio * image_width);
+
+    std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
+
+    vec3 origin(0.0, 0.0, 0.0);
+    vec3 horizontal(4.0, 0.0, 0.0);
+    vec3 vertical(0.0, 2.25, 0.0);
+    vec3 lower_left_corner = origin - horizontal/2 - vertical/2 - vec3(0,0,1);
 
     for (int j = image_height-1; j >= 0; --j) {
         for (int i = 0; i < image_width; ++i) {
-            auto r = double(i) / (image_width-1);
-            auto g = double(j) / (image_height-1);
-            auto b = 0.25;
+            auto u = double(i) / (image_width-1);
+            auto v = double(j) / (image_height-1);
 
-            int ir = static_cast<int>(255.999 * r);
-            int ig = static_cast<int>(255.999 * g);
-            int ib = static_cast<int>(255.999 * b);
-
-            std::cout << ir << ' ' << ig << ' ' << ib << '\n';
+            ray r(origin, lower_left_corner + u*horizontal + v*vertical);
+            vec3 color = ray_color(r);
+            color.write_color(std::cout);
         }
     }
+
+    std::cerr << "\nDone.\n";
 }
